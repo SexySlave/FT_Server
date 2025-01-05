@@ -43,7 +43,7 @@ public class ClientChannelHandlerDefault extends Http3RequestStreamInboundHandle
             Http3DataFrame dataFrame = new DefaultHttp3DataFrame(Unpooled.copiedBuffer("fs1".getBytes()));
 
             ctx.write(headersFrame);
-            ctx.write(dataFrame);
+            //ctx.write(dataFrame);
             ctx.flush();
         }
     }

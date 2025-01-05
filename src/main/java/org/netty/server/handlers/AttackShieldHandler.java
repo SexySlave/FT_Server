@@ -4,6 +4,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.incubator.codec.http3.Http3DataFrame;
 import io.netty.incubator.codec.http3.Http3HeadersFrame;
 import io.netty.incubator.codec.http3.Http3RequestStreamInboundHandler;
+import org.apache.log4j.Logger;
 
 /**
  * <p>This class is responsible for handling attacks.
@@ -20,6 +21,7 @@ public class AttackShieldHandler extends Http3RequestStreamInboundHandler {
         // handling attack...
         // or pass
         System.out.println("AttackHandler");
+        Logger.getLogger(this.getClass()).warn("AttackHandler");
         ctx.fireChannelRead(frame);
     }
 
