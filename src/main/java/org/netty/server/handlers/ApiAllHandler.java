@@ -4,8 +4,8 @@ import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.incubator.codec.http3.*;
 import io.netty.util.CharsetUtil;
-import ms.netty.server.APIProvider;
-import ms.netty.server.Route;
+import org.netty.server.APIProvider;
+import org.netty.server.Route;
 
 /**
  * ApiAllHandler class is responsible for handling all api requests ( which requires or not authorization)

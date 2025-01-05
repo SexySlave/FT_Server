@@ -54,15 +54,24 @@ public class ClientAuthChannelHandler extends Http3RequestStreamInboundHandler {
             System.out.println("Refresh token expired.");
             reLogin(ctx);
         } else {
-            String answ = UIHandler.YesOrNotQuestion(frame.headers().get("info") + "\n" + "Write Y/N: \n");
-            if (answ.equalsIgnoreCase("y")) {
-                System.out.println("registration...");
-                Http3HeadersFrame frame1 = new DefaultHttp3HeadersFrame();
-                frame1.headers().method("GET").path("/secure").authority(NetUtil.LOCALHOST4.getHostAddress() + ":" + 9999).scheme("https").add("authorization", "Basic " + Base64.getEncoder().encodeToString(UIHandler.getLogdata().concat(":").concat(UIHandler.getMacAddress()).getBytes(StandardCharsets.UTF_8))).add("info", "reg");
+            if (frame.headers().get("info").toString().equals("User already exists, do u wanna log in?")) {
+                System.out.println("User with same login was found, do u wanna log in&");
+                String answ = UIHandler.YesOrNotQuestion(frame.headers().get("info") + "\n" + "Write Y/N: \n");
+                if (answ.equalsIgnoreCase("y")) {
 
-                createNewChannelAndSendRequest(quicChannel, frame1);
+                }
             } else {
-                System.exit(0);
+
+                String answ = UIHandler.YesOrNotQuestion(frame.headers().get("info") + "\n" + "Write Y/N: \n");
+                if (answ.equalsIgnoreCase("y")) {
+                    System.out.println("registration...");
+                    Http3HeadersFrame frame1 = new DefaultHttp3HeadersFrame();
+                    frame1.headers().method("GET").path("/secure").authority(NetUtil.LOCALHOST4.getHostAddress() + ":" + 9999).scheme("https").add("authorization", "Basic " + Base64.getEncoder().encodeToString(UIHandler.getLogdata().concat(":").concat(UIHandler.getMacAddress()).getBytes(StandardCharsets.UTF_8))).add("info", "reg");
+
+                    createNewChannelAndSendRequest(quicChannel, frame1);
+                } else {
+                    System.exit(0);
+                }
             }
         }
     }

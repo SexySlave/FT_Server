@@ -2,6 +2,7 @@ package org.netty.server.Hibernate;
 
 import jakarta.persistence.*;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,6 +19,13 @@ public class UsersDefault {
     public UsersDefault() {
     }
 
+    public UsersDefault(String login, String password, String role, Timestamp last_online) {
+        this.login = login;
+        this.password = password;
+        this.role = role;
+        this.last_online = last_online;
+    }
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
@@ -28,6 +36,12 @@ public class UsersDefault {
 
     @Column
     private String password;
+
+    @Column
+    private String role;
+
+    @Column
+    private Timestamp last_online;
 
     @ElementCollection
     private List<RefreshTokens> refreshTokens = new ArrayList<>();
@@ -75,5 +89,21 @@ public class UsersDefault {
 
     public String getFullData() {
         return id + "/" + login + "/" + password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Timestamp getLast_online() {
+        return last_online;
+    }
+
+    public void setLast_online(Timestamp last_online) {
+        this.last_online = last_online;
     }
 }

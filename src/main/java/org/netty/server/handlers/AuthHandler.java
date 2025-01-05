@@ -7,8 +7,8 @@ import io.netty.incubator.codec.http3.Http3HeadersFrame;
 import io.netty.incubator.codec.http3.Http3RequestStreamInboundHandler;
 import io.netty.incubator.codec.quic.QuicStreamChannel;
 import io.netty.util.ReferenceCountUtil;
-import ms.netty.server.Authorization;
-import ms.netty.server.Http3ServerExample;
+import org.netty.server.Authorization;
+import org.netty.server.Http3ServerExample;
 
 import java.util.Base64;
 

@@ -5,16 +5,19 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
-import ms.netty.server.Hibernate.RefreshTokens;
-import ms.netty.server.Hibernate.UsersDefault;
+import org.apache.log4j.Logger;
+import org.netty.server.Hibernate.RefreshTokens;
+import org.netty.server.Hibernate.UsersDefault;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.mindrot.jbcrypt.BCrypt;
+import org.netty.server.exceptions.UserFoundException;
 
 import java.security.KeyPair;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -31,6 +34,8 @@ public class Authorization {
     private final RSAPrivateKey privateKey;
     private final Algorithm algorithm;
     private UsersDefault user;
+
+    Logger log = Logger.getLogger(this.getClass());
 
 
     public Authorization(KeyPair keyPair, SessionFactory sessionFactory) {
@@ -58,26 +63,40 @@ public class Authorization {
         }
     }
 
-    public void registerUser(String logData) {
+    public void registerUser(String logData) throws UserFoundException{
         try (Session session = sessionFactory.openSession()) {
             Transaction transaction = session.beginTransaction();
             try {
                 String[] logDataParts = logData.split(":");
                 String hashedPassword = BCrypt.hashpw(logDataParts[1], BCrypt.gensalt());
-                UsersDefault newUser = new UsersDefault(logDataParts[0], hashedPassword);
-                session.persist(newUser);
-                transaction.commit();
 
-                transaction = session.beginTransaction();
-                RefreshTokens newRefreshToken = new RefreshTokens(newUser.getId(), null, 0, logDataParts[2], newUser);
-                session.persist(newRefreshToken);
-                transaction.commit();
+                if (checkUser(logData)){
+                    Date utilDate = new Date();
+                    Timestamp sqlTimestamp = new Timestamp(utilDate.getTime());
 
-                user = newUser;
-                user.getRefreshTokens().add(newRefreshToken);
-            } catch (Exception e) {
+                    UsersDefault newUser = new UsersDefault(logDataParts[0], hashedPassword, "user", sqlTimestamp );
+                    session.persist(newUser);
+                    transaction.commit();
+
+                    transaction = session.beginTransaction();
+                    RefreshTokens newRefreshToken = new RefreshTokens(newUser.getId(), null, 0, logDataParts[2], newUser);
+                    session.persist(newRefreshToken);
+                    transaction.commit();
+
+                    user = newUser;
+                    user.getRefreshTokens().add(newRefreshToken);
+                } else{
+                    throw new UserFoundException();
+                }
+
+
+            } catch (UserFoundException e) {
                 transaction.rollback();
-                e.printStackTrace();
+                throw e;
+
+            }catch (Exception e) {
+                transaction.rollback();
+                log.warn(e);
             }
         }
     }

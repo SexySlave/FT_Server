@@ -7,9 +7,10 @@ import io.netty.incubator.codec.http3.Http3HeadersFrame;
 import io.netty.incubator.codec.http3.Http3RequestStreamInboundHandler;
 import io.netty.incubator.codec.quic.QuicStreamChannel;
 import io.netty.util.ReferenceCountUtil;
-import ms.netty.server.Authorization;
-import ms.netty.server.Http3ServerExample;
-import ms.netty.server.Route;
+import org.netty.server.Authorization;
+import org.netty.server.Http3ServerExample;
+import org.netty.server.Route;
+import org.netty.server.exceptions.UserFoundException;
 
 import java.util.Base64;
 
@@ -45,9 +46,13 @@ public class SecureHandler extends Http3RequestStreamInboundHandler {
                 sendResponseWithTokens(ctx, authorization.generateAccessJWT(), authorization.generateRefreshJWT(logData.split(":")[2]));
             } else {
                 if (frame.headers().get("info") != null && frame.headers().get("info").toString().equals("reg")) {
-                    authorization.registerUser(logData);
-                    sendResponseWithTokens(ctx, authorization.generateAccessJWT(), authorization.generateRefreshJWT(logData.split(":")[2]));
-                } else {
+                    try {
+                        authorization.registerUser(logData);
+                        sendResponseWithTokens(ctx, authorization.generateAccessJWT(), authorization.generateRefreshJWT(logData.split(":")[2]));
+                    } catch (UserFoundException e) {
+                        send401Response(ctx, "User already exists, do u wanna log in?");
+                    }
+                     } else {
                     send401Response(ctx, "User not found, do u wanna sign up?");
                 }
             }
