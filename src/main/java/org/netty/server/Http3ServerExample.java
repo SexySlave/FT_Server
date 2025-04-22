@@ -6,6 +6,8 @@ import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
 import io.netty.incubator.codec.http3.Http3;
 import io.netty.incubator.codec.http3.Http3ServerConnectionHandler;
@@ -30,9 +32,7 @@ import java.util.concurrent.TimeUnit;
 
 public final class Http3ServerExample {
 
-    static final int PORT = 9999;
-    public static KeyPair keyPair = generateRSAKeyPair();
-    public static SessionFactory sessionFactory;
+
 
     private Http3ServerExample() {
     }
@@ -40,24 +40,19 @@ public final class Http3ServerExample {
     public static void main(String... args) throws Exception {
 
         BasicConfigurator.configure();
+        System.out.println("Arch: "+System.getProperty("os.name"));
+        System.out.println("Arch: "+System.getProperty("os.arch"));
 
         Configuration cfg = new Configuration();
         cfg.setProperty("hibernate.connection.driver_class", "com.mysql.cj.jdbc.Driver");
-        cfg.setProperty("hibernate.connection.url", "jdbc:mysql://localhost:3306/ms_authorization");
+        cfg.setProperty("hibernate.connection.url", "jdbc:mysql://localhost:3306/fileserver");
         cfg.setProperty("hibernate.connection.username", "root");
         cfg.setProperty("hibernate.connection.password", "");
         cfg.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
         cfg.addAnnotatedClass(UsersDefault.class);
         cfg.addAnnotatedClass(RefreshTokens.class);
-        sessionFactory = cfg.buildSessionFactory();
+        ServerParams.SESSIONFACTORY = cfg.buildSessionFactory();
 
-        int port;
-
-        if (args.length == 1) {
-            port = Integer.parseInt(args[0]);
-        } else {
-            port = PORT;
-        }
 
         NioEventLoopGroup group = new NioEventLoopGroup(1);
         SelfSignedCertificate cert = new SelfSignedCertificate();
@@ -91,26 +86,18 @@ public final class Http3ServerExample {
                     }
                 }).build();
         try {
-            Bootstrap bs = new Bootstrap();
+            Bootstrap bs = new Bootstrap().handler(new LoggingHandler(LogLevel.DEBUG)) // Первым хендлером
+                    .handler(codec);
             Channel channel = bs.group(group)
                     .channel(NioDatagramChannel.class)
                     .handler(codec)
-                    .bind(new InetSocketAddress(PORT)).sync().channel();
-            System.out.println(channel.localAddress() + " " + PORT);
+                    .bind(new InetSocketAddress(ServerParams.PORT)).sync().channel();
+            System.out.println(channel.localAddress() + " " + ServerParams.PORT);
             channel.closeFuture().sync();
         } finally {
             group.shutdownGracefully();
         }
     }
 
-    public static KeyPair generateRSAKeyPair() {
-        KeyPairGenerator keyPairGenerator = null;
-        try {
-            keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        keyPairGenerator.initialize(512); // Размер ключа: 2048 бит
-        return keyPairGenerator.generateKeyPair();
-    }
+
 }

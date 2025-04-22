@@ -38,7 +38,7 @@ public class ClientOutboundAuthHandler extends ChannelOutboundHandlerAdapter {
             dataFrame.content().retain(2);
             quicChannel.attr(AttributeKey.valueOf("DataFrame")).set(dataFrame);
             System.out.println("Outbound handler got the data frame " + dataFrame.content().toString());
-            //ctx.write(dataFrame, promise);
+            ctx.write(dataFrame, promise);
 
         }
 

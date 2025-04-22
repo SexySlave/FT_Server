@@ -55,7 +55,7 @@ public class ClientAuthChannelHandler extends Http3RequestStreamInboundHandler {
             reLogin(ctx);
         } else {
             if (frame.headers().get("info").toString().equals("User already exists, do u wanna log in?")) {
-                System.out.println("User with same login was found, do u wanna log in&");
+                System.out.println("User with same login was found, do u wanna log in?");
                 String answ = UIHandler.YesOrNotQuestion(frame.headers().get("info") + "\n" + "Write Y/N: \n");
                 if (answ.equalsIgnoreCase("y")) {
                     System.out.println("logging in...");

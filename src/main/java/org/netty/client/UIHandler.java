@@ -38,14 +38,14 @@ public class UIHandler {
     }
 
     public static void saveTokensInFile(String at, String rt) throws IOException {
-        try (PrintWriter writer = new PrintWriter("src/main/java/ms/netty/client/tokens", StandardCharsets.UTF_8)) {
+        try (PrintWriter writer = new PrintWriter("src/main/java/org/netty/client/tokens", StandardCharsets.UTF_8)) {
             writer.println("accessToken: " + at);
             writer.println("refreshToken: " + rt);
         }
     }
 
     public static void refreshAccessTokenInFile(String at) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/ms/netty/client/tokens"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("src/main/java/org/netty/client/tokens"))) {
             String rt = reader.readLine().split(" ")[1];
             saveTokensInFile(at, rt);
         }
@@ -61,7 +61,7 @@ public class UIHandler {
     }
 
     public static String[] getAccessAndRefreshTokens() throws IOException {
-        BufferedReader reader = new BufferedReader(new FileReader("src/main/java/ms/netty/client/tokens"));
+        BufferedReader reader = new BufferedReader(new FileReader("src/main/java/org/netty/client/tokens"));
         String at = reader.readLine();
         String rt = reader.readLine();
         reader.close();

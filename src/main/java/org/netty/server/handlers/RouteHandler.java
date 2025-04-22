@@ -22,6 +22,7 @@ public class RouteHandler extends Http3RequestStreamInboundHandler {
         routes.put(ApiAllHandler.class.getAnnotation(Route.class).route(), new Http3RequestStreamInboundHandler[]{new AuthHandler(), new ApiAllHandler()});
         routes.put(ApiHandler.class.getAnnotation(Route.class).route(), new Http3RequestStreamInboundHandler[]{new ApiHandler()});
         routes.put(MainHandler.class.getAnnotation(Route.class).route(), new Http3RequestStreamInboundHandler[]{new MainHandler()});
+        routes.put(FileHandler.class.getAnnotation(Route.class).route(), new Http3RequestStreamInboundHandler[]{new AuthHandler(), new FileHandler()});
     }
 
     @Override

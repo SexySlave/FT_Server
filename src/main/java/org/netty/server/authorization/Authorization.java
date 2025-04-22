@@ -1,4 +1,4 @@
-package org.netty.server;
+package org.netty.server.authorization;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
@@ -12,6 +12,7 @@ import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.mindrot.jbcrypt.BCrypt;
+import org.netty.server.ServerParams;
 import org.netty.server.exceptions.UserFoundException;
 
 import java.security.KeyPair;
@@ -28,22 +29,17 @@ import java.util.UUID;
 
 public class Authorization {
 
-    private final SessionFactory sessionFactory;
-    private final KeyPair keyPair;
-    private final RSAPublicKey publicKey;
-    private final RSAPrivateKey privateKey;
-    private final Algorithm algorithm;
+    private static final SessionFactory sessionFactory = ServerParams.SESSIONFACTORY;
+    private static final KeyPair keyPair = ServerParams.KEYPAIR;
+    private static final RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
+    private static final RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();;
+    private static final Algorithm algorithm = Algorithm.RSA256(publicKey, privateKey);
     private UsersDefault user;
 
     Logger log = Logger.getLogger(this.getClass());
 
 
-    public Authorization(KeyPair keyPair, SessionFactory sessionFactory) {
-        this.keyPair = keyPair;
-        this.publicKey = (RSAPublicKey) keyPair.getPublic();
-        this.privateKey = (RSAPrivateKey) keyPair.getPrivate();
-        this.algorithm = Algorithm.RSA256(publicKey, privateKey);
-        this.sessionFactory = sessionFactory;
+    public Authorization() {
     }
 
     public Boolean checkUser(String logData) {
@@ -53,6 +49,7 @@ public class Authorization {
 
             if (user != null && BCrypt.checkpw(logDataParts[1], user.getPassword())) {
                 this.user = user;
+                System.out.println(user.getFullData());
                 return true;
             } else {
                 return false;
@@ -70,7 +67,7 @@ public class Authorization {
                 String[] logDataParts = logData.split(":");
                 String hashedPassword = BCrypt.hashpw(logDataParts[1], BCrypt.gensalt());
 
-                if (checkUser(logData)){
+                if (!checkUser(logData)){
                     Date utilDate = new Date();
                     Timestamp sqlTimestamp = new Timestamp(utilDate.getTime());
 
@@ -85,9 +82,12 @@ public class Authorization {
 
                     user = newUser;
                     user.getRefreshTokens().add(newRefreshToken);
-                } else{
+                } else {
+
                     throw new UserFoundException();
                 }
+
+
 
 
             } catch (UserFoundException e) {
@@ -123,9 +123,34 @@ public class Authorization {
     }
 
     public String generateAccessJWT() {
-        return JWT.create().withIssuer("MS_AUTHORIZATION").withSubject("MS_AUTHORIZATION_user").withClaim("type", "accesstoken").withIssuedAt(new Date()).withExpiresAt(new Date(System.currentTimeMillis() + 60000L * 15)) // 15 min
-                .withJWTId(UUID.randomUUID().toString()).withNotBefore(new Date(System.currentTimeMillis() - 1000L)).sign(algorithm);
+
+        return JWT.create()
+                .withIssuer("MS_AUTHORIZATION")
+                .withSubject("MS_AUTHORIZATION_user")
+                .withClaim("type", "accesstoken")
+                .withClaim("username", user.getLogin())
+                .withClaim("role", user.getRole())
+                .withIssuedAt(new Date())
+                .withExpiresAt(new Date(System.currentTimeMillis() + 60000L * 15)) // 15 min
+                .withJWTId(UUID.randomUUID().toString())
+                .withNotBefore(new Date(System.currentTimeMillis() - 1000L)).sign(algorithm);
     }
+
+    public String generateAccessJWT(String refresh) {
+        updateInternalUserByRefreshUUID(JwtUtil.getJWTuuid(refresh));
+        return JWT.create()
+                .withIssuer("MS_AUTHORIZATION")
+                .withSubject("MS_AUTHORIZATION_user")
+                .withClaim("type", "accesstoken")
+                .withClaim("username", user.getLogin())
+                .withClaim("role", user.getRole())
+                .withIssuedAt(new Date())
+                .withExpiresAt(new Date(System.currentTimeMillis() + 60000L * 15)) // 15 min
+                .withJWTId(UUID.randomUUID().toString())
+                .withNotBefore(new Date(System.currentTimeMillis() - 1000L)).sign(algorithm);
+    }
+
+
 
     public String generateRefreshJWT(String MACAddress) {
         updateRefreshTokenVersion(user.getId(), MACAddress);
@@ -203,6 +228,38 @@ public class Authorization {
             } catch (Exception e) {
                 transaction.rollback();
                 e.printStackTrace();
+            }
+        }
+    }
+
+    public class JwtUtil {
+        public static String getJWTusername(String jwtToken) {
+            try {
+                JWTVerifier verifier = JWT.require(algorithm).withIssuer("MS_AUTHORIZATION").build();
+                DecodedJWT decodedJWT = verifier.verify(jwtToken);
+                return decodedJWT.getClaim("username").asString();
+            } catch (Exception e) {
+                return " ";
+            }
+        }
+
+        public static String getJWTrole(String jwtToken){
+            try {
+                JWTVerifier verifier = JWT.require(algorithm).withIssuer("MS_AUTHORIZATION").build();
+                DecodedJWT decodedJWT = verifier.verify(jwtToken);
+                return decodedJWT.getClaim("role").asString();
+            } catch (Exception e) {
+                return " ";
+            }
+        }
+
+        public static int getJWTuuid(String jwtToken){
+            try {
+                JWTVerifier verifier = JWT.require(algorithm).withIssuer("MS_AUTHORIZATION").build();
+                DecodedJWT decodedJWT = verifier.verify(jwtToken);
+                return decodedJWT.getClaim("refreshtokenuuid").asInt();
+            } catch (Exception e) {
+                return 0;
             }
         }
     }

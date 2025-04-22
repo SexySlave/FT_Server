@@ -37,13 +37,13 @@ public class ClientChannelHandlerDefault extends Http3RequestStreamInboundHandle
         } else {
 
             Http3HeadersFrame headersFrame = new DefaultHttp3HeadersFrame();
-            headersFrame.headers().method("GET").path("/secure/api-all")
+            headersFrame.headers().method("GET").path("/secure/files/")
                     .authority(NetUtil.LOCALHOST4.getHostAddress() + ":" + 9999)
                     .scheme("https");
             Http3DataFrame dataFrame = new DefaultHttp3DataFrame(Unpooled.copiedBuffer("fs1".getBytes()));
 
             ctx.write(headersFrame);
-            //ctx.write(dataFrame);
+            ctx.write(dataFrame);
             ctx.flush();
         }
     }

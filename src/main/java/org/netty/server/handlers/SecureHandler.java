@@ -7,7 +7,8 @@ import io.netty.incubator.codec.http3.Http3HeadersFrame;
 import io.netty.incubator.codec.http3.Http3RequestStreamInboundHandler;
 import io.netty.incubator.codec.quic.QuicStreamChannel;
 import io.netty.util.ReferenceCountUtil;
-import org.netty.server.Authorization;
+import org.netty.server.ServerParams;
+import org.netty.server.authorization.Authorization;
 import org.netty.server.Http3ServerExample;
 import org.netty.server.Route;
 import org.netty.server.exceptions.UserFoundException;
@@ -22,7 +23,7 @@ import java.util.Base64;
 @Route(route = "/secure")
 public class SecureHandler extends Http3RequestStreamInboundHandler {
 
-    Authorization authorization = new Authorization(Http3ServerExample.keyPair, Http3ServerExample.sessionFactory);
+    Authorization authorization = new Authorization();
 
     private static final String BEARER = "Bearer";
     private static final String BASIC = "Basic";
@@ -59,7 +60,7 @@ public class SecureHandler extends Http3RequestStreamInboundHandler {
         } else if (authType.equals(BEARER)) {
             if (authorization.validateJWT(authData)) {
                 if (authorization.getJWTType(authData).equals(REFRESHTOKEN)) {
-                    sendResponseWithTokens(ctx, authorization.generateAccessJWT(), authorization.generateRefreshJWTFromJWT(authData));
+                    sendResponseWithTokens(ctx, authorization.generateAccessJWT(authData), authorization.generateRefreshJWTFromJWT(authData));
                 } else {
                     System.out.println(authType + " " + authData);
                 }

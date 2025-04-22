@@ -7,10 +7,9 @@ import io.netty.incubator.codec.http3.Http3HeadersFrame;
 import io.netty.incubator.codec.http3.Http3RequestStreamInboundHandler;
 import io.netty.incubator.codec.quic.QuicStreamChannel;
 import io.netty.util.ReferenceCountUtil;
-import org.netty.server.Authorization;
+import org.netty.server.ServerParams;
+import org.netty.server.authorization.Authorization;
 import org.netty.server.Http3ServerExample;
-
-import java.util.Base64;
 
 /**
  * <p>This class is responsible for handling authorization. It`s just validating the JWT token.
@@ -23,7 +22,7 @@ import java.util.Base64;
 
 public class AuthHandler extends Http3RequestStreamInboundHandler {
 
-    Authorization authorization = new Authorization(Http3ServerExample.keyPair, Http3ServerExample.sessionFactory);
+    Authorization authorization = new Authorization();
 
     private static final String ACCESSTOKEN = "accesstoken";
 
